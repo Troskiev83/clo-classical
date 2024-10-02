@@ -1,5 +1,5 @@
-from scipy.optimize import linprog
 import numpy as np
+from scipy.optimize import linprog
 
 def run(input_data, solver_params, extra_arguments):
     # Extract data from input
@@ -9,6 +9,10 @@ def run(input_data, solver_params, extra_arguments):
     credit_risk_threshold = input_data["credit_risk_threshold"]
     excluded_sectors = input_data["excluded_sectors"]
     total_exposure_limit = input_data["total_exposure_limit"]
+    
+    # Convert boolean values
+    for loan in loans:
+        loan['credit_risk_threshold_flag'] = True if loan['credit_risk_threshold_flag'] == "true" else False
     
     # Number of loans
     n_loans = len(loans)
@@ -40,12 +44,12 @@ def run(input_data, solver_params, extra_arguments):
     
     # Exclude certain sectors
     for l in excluded_sectors:
-        sector_exclusion = np.array([loan['sectors'][l] for loan in loans])
+        sector_exclusion = [loan['sectors'][l] if l < len(loan['sectors']) else 0 for loan in loans]
         A_ub.append(sector_exclusion)
         b_ub.append(0)  # Ensure excluded sectors are not included
 
     # Credit risk threshold constraint
-    credit_risk_constraint = np.array([loan['credit_risk_rating'] < credit_risk_threshold for loan in loans])
+    credit_risk_constraint = np.array([loan['credit_risk_rating'] < credit_risk_threshold for loan in loans], dtype=int)
     A_ub.append(-credit_risk_constraint)  # Ensure loans below threshold are selected
     b_ub.append(0)
     
